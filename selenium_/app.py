@@ -4,15 +4,15 @@ import emoji
 from selenium.webdriver.common.by import By
 
 # from config import Values
-from config.file_values import results
 from functions import identify_website, get_ini_file, initalize_webdriver, switch_to_iframe, extract_elements
+from config import Values
 
 
 def run():
-    # base_url = Values.URL.value
+    base_url = Values.URL.value
     
     # IDENTIFY WEBSITE TYPE
-    identify_website(results[1])
+    identify_website(base_url)
 
     # INITIALIZE THE WEBDRIVER & GET THE WEBSITE
     # driver = initalize_webdriver()
