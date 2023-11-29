@@ -1,0 +1,9 @@
+chromedriver-win64/
+beautifulsoup/
+venv/
+__pycache__/
+
+/.env
+/test.html
+/test.json
+/text.txt
