@@ -51,7 +51,7 @@ def get_procurement_bids(url: str):
         
         bids[index] = {
             "ecgain": Values.ECGAIN.value,
-            "base_url": Values.BASEURL.value,
+            "base_url": Values.URL.value,
             "bid_no": bid_no,
             "title": title,
             "due_date": due_date
