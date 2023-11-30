@@ -1,6 +1,9 @@
+import os
 import time
+import zipfile
 
 import emoji
+import requests
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
@@ -73,18 +76,25 @@ def get_procurement_bids(url: str):
             EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div[2]/div/div/div[2]/div/a"))
         ).get_attribute("href")
 
-        print(download_link)
+        # DOWNLOAD FILE
+        download_info = download_file(download_link)
+        
+        bids[index] = {
+            "ecgain": Values.ECGAIN.value,
+            "base_url": Values.URL.value,
+            "bid_no": bid_no,
+            "title": title,
+            "due_date": due_date,
+            "fileurl": download_info["fileurl"],
+            "filename": download_info["filename"],
+            "filesize": download_info["content_length"],
+        }
         
         driver.get(url)
         time.sleep(5)
 
-        # bids[index] = {
-        #     "ecgain": Values.ECGAIN.value,
-        #     "base_url": Values.URL.value,
-        #     "bid_no": bid_no,
-        #     "title": title,
-        #     "due_date": due_date
-        # }
+    with open("test.json", "w", encoding="utf-8") as f:
+        f.write(str(bids))
 
     # CLOSE THE DRIVER
     driver.quit()
@@ -113,3 +123,48 @@ def get_number_of_bids(html):
 
     total_number_of_bids = len(bids_with_even_classname) + len(bids_with_odd_classname)
     return total_number_of_bids
+
+
+def download_file(url):
+    print(emoji.emojize("[+] :check_mark:  DOWNLOADING FILE..."))
+
+    # GET THE FILE
+    response = requests.get(url)
+
+    # GET THE HEADERS
+    parsed_headers = dict(response.headers)
+
+    # GET THE FILENAME AND THE CONTENT LENGTH
+    filename = parsed_headers.get('Content-Disposition', '').split('filename="')[-1].split('"')[0]
+    content_length_bytes  = parsed_headers.get('Content-Length')
+    content_length_mb = str(int(content_length_bytes) / (1024 * 1024)) + " MB"
+
+    # WRITE THE CONTENT
+    with open("downloads/" + filename, 'wb') as f:
+        f.write(response.content)
+    
+    # EXTRACT DOWNLOADED ZIP FILE
+    extracted_files = extract_zip_file("downloads/" + filename)
+    
+    return {
+        "fileurl": url,
+        "filename": extracted_files,
+        "content_length": content_length_mb
+    }
+
+
+def extract_zip_file(zip_file_path):
+    print(emoji.emojize("[+] :check_mark:  EXTRACTING ZIP FILE..."))
+
+    extracted_files = []
+
+    # CREATE A DIRECTORY TO EXTRACT THE FILES
+    extraction_directory = os.path.splitext(zip_file_path)[0]
+    os.makedirs(extraction_directory, exist_ok=True)
+
+    # EXTRACT THE ZIP FILE
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        zip_ref.extractall(extraction_directory)
+        extracted_files = zip_ref.namelist()
+    
+    return extracted_files

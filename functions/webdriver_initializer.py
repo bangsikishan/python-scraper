@@ -4,7 +4,7 @@ from selenium import webdriver
 
 def initalize_webdriver() -> webdriver.Chrome:
     options = Options()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-dev-shm-usage")

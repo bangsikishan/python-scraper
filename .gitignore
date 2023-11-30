@@ -1,7 +1,8 @@
-chromedriver-win64/
 beautifulsoup/
-venv/
+chromedriver-win64/
+downloads/
 __pycache__/
+venv/
 
 /.env
 /test.html
