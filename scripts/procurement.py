@@ -46,6 +46,8 @@ def get_procurement_bids(url: str):
     html = driver.page_source
     number_of_bids = get_number_of_bids(html)
 
+    wait = WebDriverWait(driver, 30)
+
     # ACCESS & FILTER ELEMENTS
     bids = {}
     for index in range(number_of_bids):
@@ -55,7 +57,7 @@ def get_procurement_bids(url: str):
         due_date = bid_element.find_element(By.XPATH, ".//div/div[5]").text
         
         bid_element.click()
-        WebDriverWait(driver, 30).until(
+        wait.until(
             EC.presence_of_element_located((By.XPATH, "/html/body/div/div/div/div/main/div[5]/div/ul/li[3]/a"))
         ).click()
         time.sleep(2)
@@ -72,7 +74,7 @@ def get_procurement_bids(url: str):
         driver.find_element(By.XPATH, "/html/body/div[2]/div[2]/div/div/div[2]/div/button[1]").click()
         time.sleep(1)
 
-        download_link = WebDriverWait(driver, 30).until(
+        download_link = wait.until(
             EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div[2]/div/div/div[2]/div/a"))
         ).get_attribute("href")
 
