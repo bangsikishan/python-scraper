@@ -1,4 +1,5 @@
 import os
+import json
 import time
 import zipfile
 
@@ -71,7 +72,9 @@ def get_procurement_bids(url: str):
         driver.find_element(By.CLASS_NAME, "fa-download").click()
         time.sleep(2)
 
-        driver.find_element(By.XPATH, "/html/body/div[2]/div[2]/div/div/div[2]/div/button[1]").click()
+        wait.until(
+            EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div[2]/div/div/div[2]/div/button[1]"))
+        ).click()
         time.sleep(1)
 
         download_link = wait.until(
@@ -87,16 +90,15 @@ def get_procurement_bids(url: str):
             "bid_no": bid_no,
             "title": title,
             "due_date": due_date,
-            "fileurl": download_info["fileurl"],
-            "filename": download_info["filename"],
-            "filesize": download_info["content_length"],
+            "fileurl": download_info["file_url"],
+            "files_info": download_info["files_info"]
         }
         
         driver.get(url)
         time.sleep(5)
 
     with open("test.json", "w", encoding="utf-8") as f:
-        f.write(str(bids))
+        json.dump(bids, f, indent=4)
 
     # CLOSE THE DRIVER
     driver.quit()
@@ -138,35 +140,38 @@ def download_file(url):
 
     # GET THE FILENAME AND THE CONTENT LENGTH
     filename = parsed_headers.get('Content-Disposition', '').split('filename="')[-1].split('"')[0]
-    content_length_bytes  = parsed_headers.get('Content-Length')
-    content_length_mb = str(int(content_length_bytes) / (1024 * 1024)) + " MB"
 
     # WRITE THE CONTENT
     with open("downloads/" + filename, 'wb') as f:
         f.write(response.content)
     
     # EXTRACT DOWNLOADED ZIP FILE
-    extracted_files = extract_zip_file("downloads/" + filename)
+    files_info = extract_zip_file("downloads/" + filename)
     
     return {
-        "fileurl": url,
-        "filename": extracted_files,
-        "content_length": content_length_mb
+        "file_url": url,
+        "files_info": files_info
     }
 
 
 def extract_zip_file(zip_file_path):
     print(emoji.emojize("[+] :check_mark:  EXTRACTING ZIP FILE..."))
 
-    extracted_files = []
-
     # CREATE A DIRECTORY TO EXTRACT THE FILES
     extraction_directory = os.path.splitext(zip_file_path)[0]
     os.makedirs(extraction_directory, exist_ok=True)
 
     # EXTRACT THE ZIP FILE
+    files_info = []
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall(extraction_directory)
         extracted_files = zip_ref.namelist()
+        zip_ref.extractall(extraction_directory)
+
+        for file_name in extracted_files:
+            fileinfo = zip_ref.getinfo(file_name)
+            filename = fileinfo.filename
+            filesize = f"{int(fileinfo.file_size) / (1024 * 1024):.2f} MB"
+            files_info.append((filename, filesize))
     
-    return extracted_files
+    # RETURN THE LIST OF TUPLES
+    return files_info
