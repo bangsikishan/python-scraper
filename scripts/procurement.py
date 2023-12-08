@@ -11,7 +11,8 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from functions import initalize_webdriver
+from functions import initalize_webdriver, generate_md5_hash, create_database_session
+from model.smi_model import SMI
 from config import Values
 
 
@@ -97,8 +98,30 @@ def get_procurement_bids(url: str):
         driver.get(url)
         time.sleep(5)
 
-    with open("test.json", "w", encoding="utf-8") as f:
-        json.dump(bids, f, indent=4)
+    # with open("test.json", "w", encoding="utf-8") as f:
+    #     json.dump(bids, f, indent=4)
+
+    database_session  = create_database_session(url="root:@localhost:3306/kishan")
+
+    for key, value in bids.items():
+        for file in value["files_info"]:
+            hash = generate_md5_hash(value["ecgain"], value["bid_no"], file[0])
+
+            new_bid = SMI(
+                hash = hash,
+                ecgains = value["ecgain"],
+                bidno = value["bid_no"],
+                title = value["title"],
+                duedate = value["due_date"],
+                baseurl = value["base_url"],
+                fileurl = value["fileurl"],
+                filename = file[0],
+                filesize = file[1]
+            )
+
+            database_session.add(new_bid)
+            database_session.commit()
+            database_session.close()
 
     # CLOSE THE DRIVER
     driver.quit()
